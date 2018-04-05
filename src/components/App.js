@@ -42,10 +42,10 @@ const styles = theme => ({
     backgroundColor: 'red'
   },
   heading: {
-    fontSize: theme.typography.pxToRem(15),
+    fontSize: theme.typography.pxToRem(10),
   },
   secondaryHeading: {
-    fontSize: theme.typography.pxToRem(15),
+    fontSize: theme.typography.pxToRem(10),
     color: theme.palette.text.secondary,
   },
   verticalAlign: {
@@ -85,8 +85,8 @@ const styles = theme => ({
     },
   },
   qrcode: {
-    width: "55%",
-    height: "55%"
+    width: "80%",
+    height: "80%"
   }
 });
 
@@ -140,7 +140,6 @@ class Index extends React.Component {
 
   renderRooms = () => {
     const { classes } = this.props;
-
     return (
         <Paper className={classes.root} style={{overflowX: 'auto'}}>
           <Table className={classes.table}>
@@ -180,15 +179,43 @@ class Index extends React.Component {
       )
   }
 
-  render() {
+  sideInformation = () => {
+    const { classes } = this.props;
+    return (
+      <Grid container spacing={16}>
+        <Grid item xs={12}>
+          <Paper>
+            <Typography variant="title">
+              NFC instructions
+            </Typography>
+            <Typography component="p">
+              <img src={require("../assets/images/nfcInstruction.png")} width="80%" height="80%" alt=""/>
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12}>
+          <Paper>
+            <Typography variant="title">
+              Scan the QR code
+            </Typography>
+            <Typography component="p">
+              <QRCode className={classes.qrcode} value="5ac606c46fda06c8055b1019" level='M' /*'Q' 'H'*/ renderAs="svg" />
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+    )
+  }
+
+  render = () => {
     const { classes } = this.props;
     return (
       <div className={classes.root} style={{ padding: 5, overflowX: 'hidden' }}>
-        <Grid container spacing={1}>
-          <Grid item xs={1}>
+        <Grid container spacing={8}>
+          <Grid item xs={2}>
             <img src={require("../assets/images/logohr.png")} width="125px" height="125px" alt=""/>  
           </Grid>
-          <Grid item xs={11} className={classes.verticalAlign}>
+          <Grid item xs={10} className={classes.verticalAlign}>
             <Typography variant="display1" gutterBottom>
               KET-Agenda - Key for electronic technolgies in agenda's
             </Typography>
@@ -199,14 +226,14 @@ class Index extends React.Component {
             <Grid container spacing={16}>
               <Grid item xs={6}>
                 <Paper elevation={4}>
-                  <Typography variant="headline" component="h3">
+                  <Typography variant="headline">
                     Room H4.308
                   </Typography>
                 </Paper>
               </Grid>
               <Grid item xs={6}>
                 <Paper elevation={4}>
-                  <Typography component="p">
+                  <Typography variant="body2">
                     System planned for maintenance from 7th of Juni to 1th of August.<br />
                     Sorry for the inconvenience.
                   </Typography>
@@ -234,29 +261,8 @@ class Index extends React.Component {
               </Grid>
             </Grid>
           </Grid>
-          <Grid item xs={3}>
-            <Grid container spacing={16}>
-              <Grid item xs={12}>
-                <Paper>
-                  <Typography variant="headline" component="h3">
-                    NFC instructions
-                  </Typography>
-                  <Typography component="p">
-                    <img src={require("../assets/images/nfcInstruction.png")} width="55%" height="55%" alt=""/>
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid item xs={12}>
-                <Paper>
-                  <Typography variant="headline" component="h3">
-                    Scan the QR code
-                  </Typography>
-                  <Typography component="p">
-                    <QRCode className={classes.qrcode} value="5ac606c46fda06c8055b1019" renderAs="svg" />
-                  </Typography>
-                </Paper>
-              </Grid>
-            </Grid>
+          <Grid item xs={3}>            
+            {this.sideInformation()}
           </Grid>
           {/* <Grid item xs={8}>
             {this.renderRooms()}
