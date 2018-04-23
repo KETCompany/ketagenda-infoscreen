@@ -94,7 +94,7 @@ class Index extends React.Component {
     super();
     this.now = new Date();
     this.state = {
-      roomId: "5ac606c46fda06c8055b101b",
+      roomId: "5add925ac6ab909351e04d77",
       roomName: '',
       roomSlogan: 'KET-Agenda - Key for electronic technolgies in agenda\'s',
       maintMess: 'System planned for maintenance from 7th of Juni to 1th of August. Sorry for the inconvenience.',
