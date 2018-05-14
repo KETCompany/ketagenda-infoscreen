@@ -5,7 +5,10 @@
   "dependencies": {
     "classnames": "^2.2.5",
     "date-fns": "^2.0.0-alpha.7",
+    "dotenv": "^5.0.1",
     "drag-drop-touch-polyfill": "^1.0.0",
+    "firebase": "^4.13.1",
+    "firebase-admin": "^5.12.0",
     "fs-extra": "^5.0.0",
     "jss": "latest",
     "lodash": "^4.17.5",
@@ -16,16 +19,21 @@
     "npm": "^5.8.0",
     "prop-types": "latest",
     "qrcode.react": "^0.8.0",
+    "randomstring": "^1.1.5",
     "react": "latest",
     "react-agenda": "0.0.6",
     "react-big-calendar": "^0.19.0",
+    "react-cookies": "^0.1.0",
     "react-dom": "latest",
     "react-jss": "latest",
     "react-scripts": "latest",
-    "react-select": "^1.2.1"
+    "react-select": "^1.2.1",
+    "react-websocket": "^2.0.0",
+    "socket.io-client": "^2.1.0",
+    "ws": "^5.1.1"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "set PORT=3001 && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"

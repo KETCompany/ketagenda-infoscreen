@@ -5,27 +5,31 @@ import Typography from 'material-ui/Typography';
 import { withStyles } from 'material-ui/styles';
 import Grid from 'material-ui/Grid';
 
-import withRoot from '../withRoot';
-import * as RoomAPI from '../api/roomApi';
+import cookie from 'react-cookies';
+
+import * as randomstring from 'randomstring';
+
+// Qrcode
 import * as QRCode from 'qrcode.react';
 
-import BigCalendar from 'react-big-calendar'
-import moment from 'moment'
+// Api files
+import withRoot from '../withRoot';
+import * as RoomAPI from '../api/roomApi';
+
+// import Websocket from 'react-websocket';
+
+// Calendar
+import BigCalendar from 'react-big-calendar';
+import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+
 require('moment/locale/nl.js');
 
-BigCalendar.setLocalizer(BigCalendar.momentLocalizer(moment))
-var agendastartTime = new Date();
-agendastartTime.setHours(7,0,0,0);
-var agendaEndTime = new Date();
-agendaEndTime.setHours(20,0,0,0);
+require('dotenv').config();
 
 const styles = theme => ({
   root: {
     textAlign: 'center'
-  },
-  search: {
-    width: '100%',
   },
   paper: {
     paddingTop: 16,
@@ -34,54 +38,12 @@ const styles = theme => ({
     width: 600,
     margin: '0 auto',
   },
-  green: {
-    backgroundColor: 'green',
-  },
-  red: {
-    backgroundColor: 'red'
-  },
   heading: {
     fontSize: theme.typography.pxToRem(10),
   },
   secondaryHeading: {
     fontSize: theme.typography.pxToRem(10),
     color: theme.palette.text.secondary,
-  },
-  verticalAlign: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  icon: {
-    verticalAlign: 'bottom',
-    height: 20,
-    width: 20,
-  },
-  helper: {
-    borderLeft: `2px solid ${theme.palette.divider}`,
-    padding: `${theme.spacing.unit}px ${theme.spacing.unit * 2}px`,
-  },
-  link: {
-    color: theme.palette.primary.main,
-    textDecoration: 'none',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  },
-  expansionPanelRoot: {
-    flexGrow: 1,
-    marginTop: theme.spacing.unit * 3,
-  },
-  expandeds: false,
-  table: {
-    minWidth: 700,
-    overflowX: 'auto',
-    height: '100%'
-  },
-  row: {
-    '&:nth-of-type(odd)': {
-      backgroundColor: theme.palette.background.default,
-    },
   },
   qrcode: {
     width: "80%",
@@ -93,55 +55,103 @@ class Index extends React.Component {
   constructor() {
     super();
     this.now = new Date();
+    if (cookie.load('roomKey') === undefined) {
+      cookie.save('roomKey', randomstring.generate(), { path: '/' });
+    }
     this.state = {
-      roomId: "5add925ac6ab909351e04d77",
+      roomKey: cookie.load('roomKey'),
+      socket: new WebSocket(process.env.REACT_APP_SOCKET_ADDRESS),
       roomName: '',
       roomSlogan: 'KET-Agenda - Key for electronic technolgies in agenda\'s',
       maintMess: 'System planned for maintenance from 7th of Juni to 1th of August. Sorry for the inconvenience.',
       name: '',
       agendaItems: [],
-      noAgendaItems: true,
     };
-    this.loadRoomData();
+    
+    this.loadSocket();
+    this.loadRoom();
   }
 
-  loadRoomData = () => {
-    RoomAPI.get(this.state.roomId).then((json) => {
-      this.setState({
-        name: json.name,
-        agendaItems: json.booked.map((val) => {
-          return {
-            id: val._id,
-            start: new Date(val.start),
-            end: new Date(val.end),
-            allDay: false,
-            title: ''//val.class + val.subjectCode
-          }
-        }),
-        noAgendaItems: false
-      })
-    })
+  loadSocket = () => {
+    const socket = this.state.socket;
+    socket.onopen = (evt) => {
+      if (evt.isTrusted === true) {
+        socket.send(JSON.stringify({
+          msgType: 'register',
+          roomKey: this.state.roomKey,
+        }));
+      } else {
+        return false;
+      }
+      return socket;
+    };
+    socket.onmessage = (evt) => {
+      if (evt.isTrusted === true) {
+        const mess = JSON.parse(evt.data);
+        console.log(mess);
+      } else {
+        return false;
+      }
+      return socket;
+      // add the new message to state
+    	// this.setState({
+      // 	messages : this.state.messages.concat([ evt.data ])
+      // })
+    };
+    socket.onclose = (evt) => {
+      console.log(evt);
+    };
+    // socket.on('notify everyone', function(msg){
+    //   console.log(msg);
+    // });
   }
+
+  loadRoom = () => {
+    return RoomAPI.get(this.state.roomKey)
+      .then((json) => {
+        if (json === []) {
+          return false;
+        }
+        console.log(json);
+        this.setState({
+          name: json.name,
+          agendaItems: json.bookings
+            .map((val) => {
+              return {
+                // id: val._id,
+                start: new Date(val.start),
+                end: new Date(val.end),
+                title: val.name,
+              }
+            })
+        })
+      })
+      .catch(error => console.log(error));
+  }
+
+  agendaTime = (date, hours) => { 
+    date.setHours(hours,0,0,0); 
+    return date 
+  }
+
   renderAgenda = () => {
-    const { agendaItems, noAgendaItems } = this.state;
-    if (!noAgendaItems) {
-      return (
-        <div>
-            <BigCalendar
-              events={agendaItems}
-              step={12}
-              timeslots={10}
-              defaultView="week"
-              defaultDate={new Date()}
-              min={agendastartTime}
-              end={agendaEndTime}
-              toolbar={true}
-            />
-        </div>
-      );
-    } else {
-      return (<div></div>)
-    }
+    const { agendaItems } = this.state;
+    BigCalendar.setLocalizer(BigCalendar.momentLocalizer(moment))
+
+    return (
+      <div>
+          <BigCalendar
+            events={agendaItems}
+            step={12}
+            timeslots={10}
+            defaultView="week"
+            defaultDate={new Date()}
+            min={this.agendaTime(new Date(), 7)}
+            end={this.agendaTime(new Date(), 20)}
+            toolbar={true}
+          />
+      </div>
+    );
   }
 
   renderSideInformation = () => {
@@ -164,7 +174,7 @@ class Index extends React.Component {
               Scan the QR code
             </Typography>
             <Typography component="p">
-              <QRCode className={classes.qrcode} value="5ac606c46fda06c8055b1019" level='M' /*'Q' 'H'*/ renderAs="svg" />
+              <QRCode className={classes.qrcode} value={this.state.roomKey} level='M' /*'Q' 'H'*/ renderAs="svg" />
             </Typography>
           </Paper>
         </Grid>
