@@ -55,12 +55,11 @@ class Index extends React.Component {
   constructor() {
     super();
     this.now = new Date();
-    if (cookie.load('roomKey') === undefined) {
-      cookie.save('roomKey', randomstring.generate(), { path: '/' });
+    if (cookie.load('displayKey') === undefined) {
+      cookie.save('displayKey', randomstring.generate(), { path: '/' });
     }
     this.state = {
-      roomKey: cookie.load('roomKey'),
-      socket: new WebSocket(process.env.REACT_APP_SOCKET_ADDRESS),
+      displayKey: cookie.load('displayKey'),
       roomName: '',
       roomSlogan: 'KET-Agenda - Key for electronic technolgies in agenda\'s',
       maintMess: 'System planned for maintenance from 7th of Juni to 1th of August. Sorry for the inconvenience.',
@@ -73,46 +72,48 @@ class Index extends React.Component {
   }
 
   loadSocket = () => {
-    const socket = this.state.socket;
-    socket.onopen = (evt) => {
+    const webSocket = new WebSocket(process.env.REACT_APP_SOCKET_ADDRESS);
+    webSocket.onopen = (evt) => {
+      console.log(evt);
       if (evt.isTrusted === true) {
-        socket.send(JSON.stringify({
+        webSocket.send(JSON.stringify({
           msgType: 'register',
-          roomKey: this.state.roomKey,
+          displayKey: this.state.displayKey,
         }));
       } else {
         return false;
       }
-      return socket;
+      return webSocket;
     };
-    socket.onmessage = (evt) => {
+    webSocket.onmessage = (evt) => {
       if (evt.isTrusted === true) {
-        const mess = JSON.parse(evt.data);
-        console.log(mess);
+        this.processSocketMessage(JSON.parse(evt.data));
       } else {
         return false;
       }
-      return socket;
-      // add the new message to state
-    	// this.setState({
-      // 	messages : this.state.messages.concat([ evt.data ])
-      // })
+      return webSocket;
     };
-    socket.onclose = (evt) => {
-      console.log(evt);
+    webSocket.onclose = (evt) => {
+      setTimeout(() => { this.loadSocket(); console.log('tried to connect'); }, 5000);
     };
-    // socket.on('notify everyone', function(msg){
-    //   console.log(msg);
-    // });
+  }
+
+  processSocketMessage = (res) => {
+    if (res.bookings) {
+      console.log(res.bookings);
+      this.setState({
+        agendaItems: res.bookings,
+      });
+      this.renderAgenda();
+    }
   }
 
   loadRoom = () => {
-    return RoomAPI.get(this.state.roomKey)
+    return RoomAPI.get(this.state.displayKey)
       .then((json) => {
         if (json === []) {
           return false;
         }
-        console.log(json);
         this.setState({
           name: json.name,
           agendaItems: json.bookings
@@ -174,7 +175,7 @@ class Index extends React.Component {
               Scan the QR code
             </Typography>
             <Typography component="p">
-              <QRCode className={classes.qrcode} value={this.state.roomKey} level='M' /*'Q' 'H'*/ renderAs="svg" />
+              <QRCode className={classes.qrcode} value={this.state.displayKey} level='M' /*'Q' 'H'*/ renderAs="svg" />
             </Typography>
           </Paper>
         </Grid>
