@@ -92,11 +92,10 @@ class Overview extends React.Component {
   }
 
   processSocketMessage = (res) => {
-    if (res.bookings) {
-      this.setState({
-        agendaItems: res.bookings,
-      });
-      this.renderAgenda();
+    if (res.bookings) {      
+      this.loadRoom();
+    } else {
+      console.log(res);
     }
   }
 
